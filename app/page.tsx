@@ -11,7 +11,7 @@ export default function Home() {
   const [jobTitle, setJobTitle] = useState("");
   const [questions, setQuestions] = useState<Question[]>([]);
   const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(
-    null
+    null,
   );
   const [error, setError] = useState<string | null>(null);
 
@@ -45,16 +45,26 @@ export default function Home() {
 
   return (
     <main
-      className={`flex min-h-svh flex-col items-center px-4 ${
-        isCentered ? "justify-center" : "pt-8 gap-8"
+      className={`flex flex-1 flex-col items-center px-4 ${
+        isCentered
+          ? "justify-center bg-[radial-gradient(ellipse_at_center,rgba(201,106,87,0.28)_0%,rgba(201,106,87,0.08)_45%,transparent_75%)]"
+          : "pt-20 gap-8"
       }`}
     >
-      <SearchInput
-        value={jobTitle}
-        onChange={setJobTitle}
-        onSubmit={handleSubmit}
-        isLoading={uiState === "loading"}
-      />
+      <div className="flex w-full flex-col items-center gap-6 -mt-20">
+        {isCentered && (
+          <h1 className="font-heading text-2xl font-normal text-zinc-900 sm:text-3xl">
+            Hi. What's your job title?
+          </h1>
+        )}
+
+        <SearchInput
+          value={jobTitle}
+          onChange={setJobTitle}
+          onSubmit={handleSubmit}
+          isLoading={uiState === "loading"}
+        />
+      </div>
 
       {uiState === "loading" && (
         <p className="text-sm text-zinc-500" role="status">
