@@ -21,7 +21,7 @@ export default function SearchInput({
           onSubmit();
         }
       }}
-      className="flex w-full max-w-xl gap-2"
+      className="flex w-full max-w-xl items-center gap-2 rounded-full bg-white px-3 py-2 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.16)] focus-within:ring-2 focus-within:ring-brand/20"
     >
       <label htmlFor="job-title" className="sr-only">
         Enter a job title
@@ -31,14 +31,14 @@ export default function SearchInput({
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="e.g. Customer Success Manager"
+        placeholder="Customer Success Manager"
         disabled={isLoading}
-        className="flex-1 rounded-lg border border-zinc-300 px-4 py-3 text-base text-zinc-900 placeholder:text-zinc-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 disabled:opacity-50"
+        className="flex-1 rounded-full bg-white px-3 py-2 text-base text-zinc-900 placeholder:text-zinc-400 focus:outline-none disabled:opacity-50"
       />
       <button
         type="submit"
         disabled={isLoading || !value.trim()}
-        className="rounded-lg bg-brand px-6 py-3 text-base font-medium text-white transition-colors hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-brand/20 disabled:cursor-not-allowed disabled:opacity-50"
+        className="rounded-full bg-brand px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-hover focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 sm:px-5"
       >
         {isLoading ? "Generating…" : "Generate"}
       </button>
