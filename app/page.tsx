@@ -17,9 +17,14 @@ export default function Home() {
     null,
   );
   const [error, setError] = useState<string | null>(null);
+  const [speakingQuestionId, setSpeakingQuestionId] = useState<string | null>(
+    null,
+  );
 
   async function handleSubmit() {
     if (!jobTitle.trim()) return;
+    window.speechSynthesis.cancel();
+    setSpeakingQuestionId(null);
     setError(null);
     setUiState("loading");
 
@@ -40,8 +45,24 @@ export default function Home() {
     setUiState("answer-mode");
   }
 
-  function handleReadAloud(_id: string) {
-    // TODO: wire to Web Speech API
+  function handleReadAloud(id: string) {
+    if (speakingQuestionId === id) {
+      window.speechSynthesis.cancel();
+      setSpeakingQuestionId(null);
+      return;
+    }
+
+    const question = questions.find((q) => q.id === id);
+    if (!question) return;
+
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(question.question);
+    utterance.onstart = () => setSpeakingQuestionId(id);
+    utterance.onend = () => setSpeakingQuestionId(null);
+    utterance.onerror = () => setSpeakingQuestionId(null);
+
+    window.speechSynthesis.speak(utterance);
   }
 
   const isResults = uiState === "results" || uiState === "answer-mode";
@@ -83,6 +104,7 @@ export default function Home() {
           <ResultsView
             questions={questions}
             selectedId={selectedQuestionId}
+            speakingQuestionId={speakingQuestionId}
             onSelect={handleSelectQuestion}
             onReadAloud={handleReadAloud}
           />

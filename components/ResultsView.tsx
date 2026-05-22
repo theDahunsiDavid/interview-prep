@@ -6,6 +6,7 @@ import QuestionList from "./QuestionList";
 interface ResultsViewProps {
   questions: Question[];
   selectedId: string | null;
+  speakingQuestionId: string | null;
   onSelect: (id: string) => void;
   onReadAloud: (id: string) => void;
 }
@@ -13,6 +14,7 @@ interface ResultsViewProps {
 export default function ResultsView({
   questions,
   selectedId,
+  speakingQuestionId,
   onSelect,
   onReadAloud,
 }: ResultsViewProps) {
@@ -21,6 +23,7 @@ export default function ResultsView({
       <QuestionList
         questions={questions}
         selectedId={selectedId}
+        speakingQuestionId={speakingQuestionId}
         onSelect={onSelect}
         onReadAloud={onReadAloud}
       />

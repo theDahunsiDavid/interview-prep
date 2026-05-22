@@ -6,6 +6,7 @@ interface QuestionCardProps {
   question: Question;
   index: number;
   isSelected: boolean;
+  isSpeaking: boolean;
   onSelect: () => void;
   onReadAloud: () => void;
 }
@@ -14,6 +15,7 @@ export default function QuestionCard({
   question,
   index,
   isSelected,
+  isSpeaking,
   onSelect,
   onReadAloud,
 }: QuestionCardProps) {
@@ -44,8 +46,13 @@ export default function QuestionCard({
             e.stopPropagation();
             onReadAloud();
           }}
-          aria-label="Read question aloud"
-          className="flex-shrink-0 rounded-md p-1 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-brand/20"
+          aria-label={isSpeaking ? "Stop reading" : "Read question aloud"}
+          className={
+            "flex-shrink-0 rounded-md p-1 transition-colors hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-brand/20 " +
+            (isSpeaking
+              ? "text-brand hover:text-brand"
+              : "text-zinc-400 hover:text-zinc-600")
+          }
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
