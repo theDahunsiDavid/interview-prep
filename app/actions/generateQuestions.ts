@@ -16,9 +16,9 @@ const questionsSchema = z.object({
       rationale: z
         .string()
         .describe(
-          "Why this question is relevant to the role — not shown to the user, used for auditing"
+          "Why this question is relevant to the role — not shown to the user, used for auditing",
         ),
-    })
+    }),
   ),
 });
 
@@ -27,7 +27,7 @@ type GenerateQuestionsResult =
   | { success: false; error: string };
 
 export async function generateQuestions(
-  jobTitle: string
+  jobTitle: string,
 ): Promise<GenerateQuestionsResult> {
   try {
     const { system, prompt } = questionGenerationPrompt(jobTitle);
@@ -39,7 +39,10 @@ export async function generateQuestions(
       prompt,
     });
 
-    console.log("Raw model response:", JSON.stringify(output.questions, null, 2));
+    console.log(
+      "Raw model response:",
+      JSON.stringify(output.questions, null, 2),
+    );
 
     if (!output.questions || output.questions.length === 0) {
       return {
@@ -55,8 +58,7 @@ export async function generateQuestions(
 
     return { success: true, questions };
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : String(error);
+    const message = error instanceof Error ? error.message : String(error);
 
     // Log the full error on the server for debugging
     console.error("generateQuestions error:", error);
@@ -114,8 +116,7 @@ export async function generateQuestions(
     ) {
       return {
         success: false,
-        error:
-          "The AI response was malformed. Please try again.",
+        error: "The AI response was malformed. Please try again.",
       };
     }
 
