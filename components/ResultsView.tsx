@@ -19,7 +19,7 @@ export default function ResultsView({
   onReadAloud,
 }: ResultsViewProps) {
   return (
-    <div className="mx-auto max-w-[90rem] flex flex-col items-center lg:items-start gap-6 mt-6 sm:mt-0 lg:pl-42 w-full">
+    <div className="mx-auto max-w-[90rem] flex flex-col items-center lg:items-start gap-6 mt-8 lg:px-42 w-full">
       <QuestionList
         questions={questions}
         selectedId={selectedId}
