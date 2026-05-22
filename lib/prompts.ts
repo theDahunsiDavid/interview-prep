@@ -16,9 +16,10 @@ export function questionGenerationPrompt(jobTitle: string): {
       "STRUCTURE AND LENGTH\n" +
       "5. Keep each question concise. Aim for two to three sentences maximum: the opening sentences set the scenario, the final sentence is always the ask.\n" +
       "6. Every question must end with exactly one direct ask followed by a question mark. This rule is non-negotiable. If you find the word 'and' in your closing sentence, you have asked two questions, so remove one question.\n\n" +
-      "7. The scenario and the ask must be two separate sentences. End the scenario sentence with a full stop before beginning the ask. Never connect them with a comma. " +
+      "7. The ask must be as specific as the scenario. If the scenario establishes a particular tension — such as misaligned stakeholders, a resource conflict, or a time constraint — the closing question must probe that specific tension directly, not ask generically what the candidate would do.\n\n" +
+      "8. The scenario and the ask must be two separate sentences. End the scenario sentence with a full stop before beginning the ask. Never connect them with a comma. " +
       "COMPETENCY COVERAGE\n" +
-      "7. Each question must target exactly one competency. Choose from: technical skills, behavioural, strategic thinking, cross-functional collaboration, or problem-solving. No question may share a competency with another.\n\n" +
+      "9. Each question must target exactly one competency. Choose from: technical skills, behavioural, strategic thinking, cross-functional collaboration, or problem-solving. No question may share a competency with another.\n\n" +
       "Include a rationale for each question explaining which competency it targets and why that competency is critical to this role.",
     prompt: `Generate three interview questions for a ${jobTitle} position. Return the result as a JSON object with the field "questions" containing an array of objects, each with the fields "question" and "rationale".`,
   };
