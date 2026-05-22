@@ -17,11 +17,12 @@ export default function QuestionList({
   onReadAloud,
 }: QuestionListProps) {
   return (
-    <div className="flex w-full max-w-xl flex-col gap-3">
-      {questions.map((q) => (
+    <div className="flex w-full max-w-2xl flex-col gap-4 mt-8 mb-8">
+      {questions.map((q, index) => (
         <QuestionCard
           key={q.id}
           question={q}
+          index={index}
           isSelected={q.id === selectedId}
           onSelect={() => onSelect(q.id)}
           onReadAloud={() => onReadAloud(q.id)}
