@@ -19,7 +19,7 @@ export default function QuestionList({
   onReadAloud,
 }: QuestionListProps) {
   return (
-    <div className="flex w-full max-w-2xl flex-col gap-4 mt-8 mb-8">
+    <div className="flex w-full flex-col gap-4">
       {questions.map((q, index) => (
         <QuestionCard
           key={q.id}
