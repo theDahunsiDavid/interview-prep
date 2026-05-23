@@ -2,8 +2,8 @@
 
 import { generateText, Output } from "ai";
 import { z } from "zod";
-import { getModel } from "@/lib/ai";
-import { QUESTION_MODEL } from "@/lib/models";
+import { getModel, getFallbackModel, withFallback } from "@/lib/ai";
+import { QUESTION_MODEL, QUESTION_MODEL_FALLBACK } from "@/lib/models";
 import { questionGenerationPrompt } from "@/lib/prompts";
 import type { Question } from "@/types";
 
@@ -32,12 +32,32 @@ export async function generateQuestions(
   try {
     const { system, prompt } = questionGenerationPrompt(jobTitle);
 
-    const { output } = await generateText({
-      model: getModel(QUESTION_MODEL),
-      output: Output.object({ schema: questionsSchema }),
-      system,
-      prompt,
-    });
+    const { output } = await withFallback(
+      () =>
+        generateText({
+          model: getModel(QUESTION_MODEL),
+          output: Output.object({ schema: questionsSchema }),
+          system,
+          prompt,
+        }),
+      async () => {
+        const fallbackModel = getFallbackModel(QUESTION_MODEL_FALLBACK);
+        if (!fallbackModel) throw new Error("Fallback model not available");
+        const { text: fallbackText } = await generateText({
+          model: fallbackModel,
+          output: Output.text(),
+          system:
+            system +
+            "\n\nYou must respond with valid JSON only, no markdown, no other text.",
+          prompt: prompt + "\n\nRespond with valid JSON only. Do not wrap it in markdown.",
+        });
+        const json = fallbackText
+          .replace(/```(?:json)?\s*\n?/g, "")
+          .trim();
+        const parsed = questionsSchema.parse(JSON.parse(json));
+        return { output: parsed };
+      },
+    );
 
     console.log(
       "Raw model response:",
