@@ -24,6 +24,16 @@ export async function transcribeAudio(
   groqFormData.append("response_format", "json");
 
   try {
+    console.log(
+      "transcribeAudio: sending",
+      "file:",
+      audioFile.name,
+      "type:",
+      audioFile.type,
+      "size:",
+      `${(audioFile.size / 1024).toFixed(1)} KB`,
+    );
+
     const response = await fetch(
       "https://api.groq.com/openai/v1/audio/transcriptions",
       {
@@ -32,10 +42,16 @@ export async function transcribeAudio(
           Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
         },
         body: groqFormData,
+        signal: AbortSignal.timeout(60000),
       },
     );
 
     if (!response.ok) {
+      console.log(
+        "transcribeAudio: response",
+        response.status,
+        response.statusText,
+      );
       if (response.status === 413) {
         return {
           success: false,
