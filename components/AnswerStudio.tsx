@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import SpeakerButton from "./SpeakerButton";
 import { transcribeAudio } from "@/app/actions/transcribeAudio";
 import { evaluateAnswer } from "@/app/actions/evaluateAnswer";
+import CopyButton from "./CopyButton";
 import type { Question, Attempt } from "@/types";
 
 type RecordingStatus = "idle" | "requesting" | "recording" | "done";
@@ -182,6 +183,28 @@ export default function AnswerStudio({ question, jobTitle, isSpeaking, onReadAlo
   }
 
   async function evaluate(transcriptText: string) {
+    // Pre-processing guard: skip API call for near-empty answers.
+    const wordCount = transcriptText.trim().split(/\s+/).length;
+    if (wordCount < 8) {
+      const shortResult = {
+        score: 1,
+        strengths: [] as string[],
+        improvements: [
+          "Your answer was too short to evaluate. Please record a more complete response that addresses the question.",
+        ],
+        summary:
+          "The answer contained fewer than 8 words and could not be meaningfully evaluated.",
+      };
+      setEvaluation(shortResult);
+      setEvaluationStatus("done");
+      onAttemptComplete({
+        transcript: transcriptText,
+        ...shortResult,
+        timestamp: Date.now(),
+      });
+      return;
+    }
+
     setEvaluationStatus("loading");
     setEvaluationError(null);
 
@@ -256,9 +279,12 @@ export default function AnswerStudio({ question, jobTitle, isSpeaking, onReadAlo
                 </summary>
                 <div className="px-4 pb-4 flex flex-col gap-3">
                   <div>
-                    <p className="text-xs font-medium text-zinc-400 mb-1">
-                      Transcript
-                    </p>
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-xs font-medium text-zinc-400">
+                        Transcript
+                      </p>
+                      <CopyButton text={last.transcript} />
+                    </div>
                     <p className="text-sm text-zinc-700">
                       {last.transcript}
                     </p>
@@ -400,6 +426,12 @@ export default function AnswerStudio({ question, jobTitle, isSpeaking, onReadAlo
 
             {transcriptStatus === "done" && transcript && (
               <div className="rounded-md bg-zinc-50 p-4 max-h-48 overflow-y-auto">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-medium text-zinc-400">
+                    Transcript
+                  </p>
+                  <CopyButton text={transcript} />
+                </div>
                 <p className="text-sm text-zinc-700 whitespace-pre-wrap">
                   {transcript}
                 </p>
@@ -503,9 +535,12 @@ export default function AnswerStudio({ question, jobTitle, isSpeaking, onReadAlo
                       </summary>
                       <div className="px-4 pb-4 flex flex-col gap-3">
                         <div>
-                          <p className="text-xs font-medium text-zinc-400 mb-1">
-                            Transcript
-                          </p>
+                          <div className="flex items-center justify-between mb-1">
+                            <p className="text-xs font-medium text-zinc-400">
+                              Transcript
+                            </p>
+                            <CopyButton text={attempt.transcript} />
+                          </div>
                           <p className="text-sm text-zinc-700">
                             {attempt.transcript}
                           </p>
