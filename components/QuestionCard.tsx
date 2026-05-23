@@ -24,7 +24,10 @@ export default function QuestionCard({
     <div
       role="button"
       tabIndex={0}
-      onClick={onSelect}
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect();
+      }}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
