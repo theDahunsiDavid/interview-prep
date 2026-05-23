@@ -42,7 +42,7 @@ export async function transcribeAudio(
           Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
         },
         body: groqFormData,
-        signal: AbortSignal.timeout(60000),
+        signal: AbortSignal.timeout(120000),
       },
     );
 
