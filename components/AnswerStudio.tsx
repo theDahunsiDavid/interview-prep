@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import SpeakerButton from "./SpeakerButton";
 import { transcribeAudio } from "@/app/actions/transcribeAudio";
 import { evaluateAnswer } from "@/app/actions/evaluateAnswer";
-import type { Question } from "@/types";
+import type { Question, Attempt } from "@/types";
 
 type RecordingStatus = "idle" | "requesting" | "recording" | "done";
 
@@ -13,9 +13,11 @@ interface AnswerStudioProps {
   jobTitle: string;
   isSpeaking: boolean;
   onReadAloud: () => void;
+  attempts: Attempt[];
+  onAttemptComplete: (attempt: Attempt) => void;
 }
 
-export default function AnswerStudio({ question, jobTitle, isSpeaking, onReadAloud }: AnswerStudioProps) {
+export default function AnswerStudio({ question, jobTitle, isSpeaking, onReadAloud, attempts, onAttemptComplete }: AnswerStudioProps) {
   const [status, setStatus] = useState<RecordingStatus>("idle");
   const [error, setError] = useState<string | null>(null);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
@@ -52,6 +54,22 @@ export default function AnswerStudio({ question, jobTitle, isSpeaking, onReadAlo
       }
       cleanup();
     };
+  }, []);
+
+  useEffect(() => {
+    if (attempts.length > 0) {
+      const latest = attempts[attempts.length - 1];
+      setTranscript(latest.transcript);
+      setTranscriptStatus("done");
+      setEvaluation({
+        score: latest.score,
+        strengths: latest.strengths,
+        improvements: latest.improvements,
+        summary: latest.summary,
+      });
+      setEvaluationStatus("done");
+      setStatus("done");
+    }
   }, []);
 
   function cleanup() {
@@ -177,6 +195,14 @@ export default function AnswerStudio({ question, jobTitle, isSpeaking, onReadAlo
     if (result.success) {
       setEvaluation(result.evaluation);
       setEvaluationStatus("done");
+      onAttemptComplete({
+        transcript: transcriptText,
+        score: result.evaluation.score,
+        strengths: result.evaluation.strengths,
+        improvements: result.evaluation.improvements,
+        summary: result.evaluation.summary,
+        timestamp: Date.now(),
+      });
     } else {
       setEvaluationError(result.error);
       setEvaluationStatus("error");
@@ -185,7 +211,6 @@ export default function AnswerStudio({ question, jobTitle, isSpeaking, onReadAlo
 
   function resetRecording() {
     setAudioBlob(null);
-    setStatus("idle");
     setError(null);
     setElapsed(0);
     setTranscript(null);
@@ -194,6 +219,7 @@ export default function AnswerStudio({ question, jobTitle, isSpeaking, onReadAlo
     setEvaluation(null);
     setEvaluationStatus("idle");
     setEvaluationError(null);
+    startRecording();
   }
 
   function formatTime(seconds: number): string {
@@ -219,6 +245,58 @@ export default function AnswerStudio({ question, jobTitle, isSpeaking, onReadAlo
 
       {/* Recording controls */}
       <div className="flex flex-col gap-4">
+        {(status === "requesting" || status === "recording") &&
+          attempts.length > 0 &&
+          (() => {
+            const last = attempts[attempts.length - 1];
+            return (
+              <details className="rounded-md border border-zinc-200 overflow-hidden">
+                <summary className="px-4 py-3 cursor-pointer hover:bg-zinc-50 text-sm text-zinc-500">
+                  View last attempt feedback
+                </summary>
+                <div className="px-4 pb-4 flex flex-col gap-3">
+                  <div>
+                    <p className="text-xs font-medium text-zinc-400 mb-1">
+                      Transcript
+                    </p>
+                    <p className="text-sm text-zinc-700">
+                      {last.transcript}
+                    </p>
+                  </div>
+                  {last.strengths.length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-green-700 mb-1">
+                        Strengths
+                      </p>
+                      <ul className="list-disc list-inside flex flex-col gap-1">
+                        {last.strengths.map((s, j) => (
+                          <li key={j} className="text-sm text-zinc-700">
+                            {s}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {last.improvements.length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-amber-700 mb-1">
+                        Areas to improve
+                      </p>
+                      <ul className="list-disc list-inside flex flex-col gap-1">
+                        {last.improvements.map((imp, j) => (
+                          <li key={j} className="text-sm text-zinc-700">
+                            {imp}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  <p className="text-sm text-zinc-600">{last.summary}</p>
+                </div>
+              </details>
+            );
+          })()}
+
         {error && (
           <div className="rounded-md bg-red-50 px-4 py-3">
             <p className="text-sm text-red-700" role="alert">
@@ -396,6 +474,74 @@ export default function AnswerStudio({ question, jobTitle, isSpeaking, onReadAlo
                 <p className="text-sm text-red-700" role="alert">
                   {evaluationError}
                 </p>
+              </div>
+            )}
+
+            {attempts.length > 1 && (
+              <div className="flex flex-col gap-3">
+                <p className="text-xs font-medium text-zinc-400">
+                  Previous attempts
+                </p>
+                {attempts
+                  .slice(0, -1)
+                  .reverse()
+                  .map((attempt, i) => (
+                    <details
+                      key={i}
+                      className="rounded-md border border-zinc-200 overflow-hidden"
+                    >
+                      <summary className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-zinc-50">
+                        <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-zinc-200 text-xs font-semibold text-zinc-600">
+                          {attempt.score}
+                        </span>
+                        <span className="text-sm text-zinc-600">
+                          {new Date(attempt.timestamp).toLocaleTimeString(
+                            [],
+                            { hour: "2-digit", minute: "2-digit" },
+                          )}
+                        </span>
+                      </summary>
+                      <div className="px-4 pb-4 flex flex-col gap-3">
+                        <div>
+                          <p className="text-xs font-medium text-zinc-400 mb-1">
+                            Transcript
+                          </p>
+                          <p className="text-sm text-zinc-700">
+                            {attempt.transcript}
+                          </p>
+                        </div>
+                        {attempt.strengths.length > 0 && (
+                          <div>
+                            <p className="text-xs font-medium text-green-700 mb-1">
+                              Strengths
+                            </p>
+                            <ul className="list-disc list-inside flex flex-col gap-1">
+                              {attempt.strengths.map((s, j) => (
+                                <li key={j} className="text-sm text-zinc-700">
+                                  {s}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {attempt.improvements.length > 0 && (
+                          <div>
+                            <p className="text-xs font-medium text-amber-700 mb-1">
+                              Areas to improve
+                            </p>
+                            <ul className="list-disc list-inside flex flex-col gap-1">
+                              {attempt.improvements.map((imp, j) => (
+                                <li key={j} className="text-sm text-zinc-700">
+                                  {imp}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        <p className="text-sm text-zinc-600">{attempt.summary}</p>
+                      </div>
+                    </details>
+                  ))}
               </div>
             )}
 
