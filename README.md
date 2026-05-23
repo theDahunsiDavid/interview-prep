@@ -2,7 +2,7 @@
 
 AI-powered deliberate practice for job interviews. Enter a job title, get role-specific questions, record your answers, and receive scored feedback with actionable improvements.
 
-**[Live URL]** · **[Loom walkthrough](#)**
+**[Live URL](#)** · **[Loom walkthrough](#)**
 
 ---
 
