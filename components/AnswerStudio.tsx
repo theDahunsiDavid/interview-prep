@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import SpeakerButton from "./SpeakerButton";
+import { transcribeAudio } from "@/app/actions/transcribeAudio";
 import type { Question } from "@/types";
 
 type RecordingStatus = "idle" | "requesting" | "recording" | "done";
@@ -19,10 +20,27 @@ export default function AnswerStudio({ question, jobTitle, isSpeaking, onReadAlo
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [elapsed, setElapsed] = useState(0);
 
+  const [transcript, setTranscript] = useState<string | null>(null);
+  const [transcriptStatus, setTranscriptStatus] = useState<
+    "idle" | "loading" | "done" | "error"
+  >("idle");
+  const [transcriptError, setTranscriptError] = useState<string | null>(null);
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const abortedRef = useRef(false);
+
+  useEffect(() => {
+    return () => {
+      abortedRef.current = true;
+      if (mediaRecorderRef.current?.state === "recording") {
+        mediaRecorderRef.current.stop();
+      }
+      cleanup();
+    };
+  }, []);
 
   function cleanup() {
     if (timerRef.current) {
@@ -62,10 +80,15 @@ export default function AnswerStudio({ question, jobTitle, isSpeaking, onReadAlo
       };
 
       mediaRecorder.onstop = () => {
+        if (abortedRef.current) {
+          cleanup();
+          return;
+        }
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
         setAudioBlob(blob);
         setStatus("done");
         cleanup();
+        transcribe(blob);
       };
 
       mediaRecorder.start();
@@ -108,11 +131,32 @@ export default function AnswerStudio({ question, jobTitle, isSpeaking, onReadAlo
     }
   }
 
+  async function transcribe(blob: Blob) {
+    setTranscriptStatus("loading");
+    setTranscriptError(null);
+
+    const formData = new FormData();
+    formData.append("audio", blob, "recording.webm");
+
+    const result = await transcribeAudio(formData);
+
+    if (result.success) {
+      setTranscript(result.transcript);
+      setTranscriptStatus("done");
+    } else {
+      setTranscriptError(result.error);
+      setTranscriptStatus("error");
+    }
+  }
+
   function resetRecording() {
     setAudioBlob(null);
     setStatus("idle");
     setError(null);
     setElapsed(0);
+    setTranscript(null);
+    setTranscriptStatus("idle");
+    setTranscriptError(null);
   }
 
   function formatTime(seconds: number): string {
@@ -224,10 +268,37 @@ export default function AnswerStudio({ question, jobTitle, isSpeaking, onReadAlo
         )}
 
         {status === "done" && (
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-4">
             <p className="text-sm text-zinc-600">
-              Recording saved. Ready for feedback.
+              Recording saved.
             </p>
+
+            {transcriptStatus === "loading" && (
+              <div className="flex items-center gap-2 text-sm text-zinc-500">
+                <span
+                  className="inline-block h-4 w-4 rounded-full border-2 border-brand/30 border-t-brand animate-spin"
+                  aria-hidden="true"
+                />
+                Transcribing your answer…
+              </div>
+            )}
+
+            {transcriptStatus === "done" && transcript && (
+              <div className="rounded-md bg-zinc-50 p-4 max-h-48 overflow-y-auto">
+                <p className="text-sm text-zinc-700 whitespace-pre-wrap">
+                  {transcript}
+                </p>
+              </div>
+            )}
+
+            {transcriptStatus === "error" && transcriptError && (
+              <div className="rounded-md bg-red-50 px-4 py-3">
+                <p className="text-sm text-red-700" role="alert">
+                  {transcriptError}
+                </p>
+              </div>
+            )}
+
             <button
               type="button"
               onClick={resetRecording}
