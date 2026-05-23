@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import SpeakerButton from "./SpeakerButton";
 import { transcribeAudio } from "@/app/actions/transcribeAudio";
+import { evaluateAnswer } from "@/app/actions/evaluateAnswer";
 import type { Question } from "@/types";
 
 type RecordingStatus = "idle" | "requesting" | "recording" | "done";
@@ -25,6 +26,17 @@ export default function AnswerStudio({ question, jobTitle, isSpeaking, onReadAlo
     "idle" | "loading" | "done" | "error"
   >("idle");
   const [transcriptError, setTranscriptError] = useState<string | null>(null);
+
+  const [evaluationStatus, setEvaluationStatus] = useState<
+    "idle" | "loading" | "done" | "error"
+  >("idle");
+  const [evaluationError, setEvaluationError] = useState<string | null>(null);
+  const [evaluation, setEvaluation] = useState<{
+    score: number;
+    strengths: string[];
+    improvements: string[];
+    summary: string;
+  } | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -56,6 +68,7 @@ export default function AnswerStudio({ question, jobTitle, isSpeaking, onReadAlo
   async function startRecording() {
     setError(null);
     setStatus("requesting");
+    abortedRef.current = false;
 
     if (!navigator.mediaDevices || !window.MediaRecorder) {
       setError(
@@ -143,9 +156,30 @@ export default function AnswerStudio({ question, jobTitle, isSpeaking, onReadAlo
     if (result.success) {
       setTranscript(result.transcript);
       setTranscriptStatus("done");
+      evaluate(result.transcript);
     } else {
       setTranscriptError(result.error);
       setTranscriptStatus("error");
+    }
+  }
+
+  async function evaluate(transcriptText: string) {
+    setEvaluationStatus("loading");
+    setEvaluationError(null);
+
+    const result = await evaluateAnswer(
+      jobTitle,
+      question.question,
+      question.rationale,
+      transcriptText,
+    );
+
+    if (result.success) {
+      setEvaluation(result.evaluation);
+      setEvaluationStatus("done");
+    } else {
+      setEvaluationError(result.error);
+      setEvaluationStatus("error");
     }
   }
 
@@ -157,6 +191,9 @@ export default function AnswerStudio({ question, jobTitle, isSpeaking, onReadAlo
     setTranscript(null);
     setTranscriptStatus("idle");
     setTranscriptError(null);
+    setEvaluation(null);
+    setEvaluationStatus("idle");
+    setEvaluationError(null);
   }
 
   function formatTime(seconds: number): string {
@@ -295,6 +332,69 @@ export default function AnswerStudio({ question, jobTitle, isSpeaking, onReadAlo
               <div className="rounded-md bg-red-50 px-4 py-3">
                 <p className="text-sm text-red-700" role="alert">
                   {transcriptError}
+                </p>
+              </div>
+            )}
+
+            {evaluationStatus === "loading" && (
+              <div className="flex items-center gap-2 text-sm text-zinc-500">
+                <span
+                  className="inline-block h-4 w-4 rounded-full border-2 border-brand/30 border-t-brand animate-spin"
+                  aria-hidden="true"
+                />
+                Evaluating your answer…
+              </div>
+            )}
+
+            {evaluationStatus === "done" && evaluation && (
+              <div className="flex flex-col gap-3 rounded-md bg-zinc-50 p-4">
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-brand text-lg font-semibold text-white">
+                    {evaluation.score}
+                  </span>
+                  <span className="text-sm text-zinc-500">
+                    out of 10
+                  </span>
+                </div>
+
+                {evaluation.strengths.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-green-700 mb-1">
+                      Strengths
+                    </p>
+                    <ul className="list-disc list-inside flex flex-col gap-1">
+                      {evaluation.strengths.map((s, i) => (
+                        <li key={i} className="text-sm text-zinc-700">
+                          {s}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {evaluation.improvements.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-amber-700 mb-1">
+                      Areas to improve
+                    </p>
+                    <ul className="list-disc list-inside flex flex-col gap-1">
+                      {evaluation.improvements.map((imp, i) => (
+                        <li key={i} className="text-sm text-zinc-700">
+                          {imp}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                <p className="text-sm text-zinc-600">{evaluation.summary}</p>
+              </div>
+            )}
+
+            {evaluationStatus === "error" && evaluationError && (
+              <div className="rounded-md bg-red-50 px-4 py-3">
+                <p className="text-sm text-red-700" role="alert">
+                  {evaluationError}
                 </p>
               </div>
             )}
