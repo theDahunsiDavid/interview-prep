@@ -53,9 +53,55 @@ export function evaluationPrompt(
       "- 3 to 4: The candidate showed limited understanding of the competency, ignored most constraints, and provided a vague or incomplete answer.\n" +
       "- 1 to 2: The candidate did not demonstrate the target competency, ignored all constraints, or gave an answer unrelated to the question.\n\n" +
       "SCORING\n" +
-      "8. Assign the score using the rubric above. The score must be consistent with the summary. If the summary identifies that the candidate missed the " +
-      "central tension of the question, the score must be 6 or below regardless of other strengths. A structured or articulate answer that misses the core " +
-      "constraint does not qualify for a 7 or above.",
+      "8. Before returning the JSON, determine the score using the rubric, then write the summary to explain that score. " +
+      "If the summary identifies that the candidate missed the central tension of the question, the score must be 6 or below " +
+      "regardless of other strengths. A structured or articulate answer that misses the core constraint does not qualify for a 7 or above.\n\n" +
+      "EXAMPLES\n" +
+      "The following are worked examples of correctly scored evaluations. Use them to calibrate your scoring before evaluating the actual answer.\n\n" +
+      "EXAMPLE 1 — Score 5\n" +
+      "Example job title: Data Analyst\n" +
+      "Example question: You've been tasked with analysing customer purchasing trends, but the database query is taking longer " +
+      "than expected to run, and the stakeholder meeting is in two hours. What specific steps will you take to deliver preliminary insights on time?\n" +
+      "Example rationale: This question targets problem-solving competency, which is critical for a Data Analyst as they often face " +
+      "technical issues that need swift resolution to meet deadlines and deliver valuable insights.\n" +
+      "Example transcript: 'I will try to optimize the query. Apart from that I will also check the last reports I have done because " +
+      "those reports might contain historical data that when compared could show a trend. I would most likely focus on optimizing the " +
+      "database query — making sure I am only selecting the most important data points, not selecting for a lot of data points, only " +
+      "the necessary ones.'\n" +
+      "Example correct score: 5\n" +
+      "Scoring rationale: The candidate correctly identifies query optimisation as the right first technical move and narrows it to " +
+      "strategic column selection, which is sound problem-solving instinct. The historical reports idea is also a legitimate analyst " +
+      "workaround. However, the 2-hour deadline is never acknowledged anywhere in the answer. The central tension of the question is " +
+      "not how to fix the query — it is how to deliver preliminary insights to a stakeholder meeting despite the query problem. " +
+      "The candidate never addresses what preliminary findings look like, how to frame incomplete data to a stakeholder, or whether " +
+      "to communicate proactively before the meeting. Missing the delivery dimension entirely while only addressing the technical " +
+      "dimension places this in the 5 to 6 band at the lower end. A 6 would require at least acknowledging the deadline or the " +
+      "stakeholder communication need. A 7 would require addressing both. This answer does neither, so 5 is the correct score.\n\n" +
+      "---\n\n" +
+      "EXAMPLE 2 — Score 8\n" +
+      "Example job title: Data Analyst\n" +
+      "Example question: You've been tasked with analysing customer purchasing trends, but the database query is taking longer " +
+      "than expected to run, and the stakeholder meeting is in two hours. What specific steps will you take to deliver preliminary insights on time?\n" +
+      "Example rationale: This question targets problem-solving competency, which is critical for a Data Analyst as they often face " +
+      "technical issues that need swift resolution to meet deadlines and deliver valuable insights.\n" +
+      "Example transcript: 'The first thing I will do is immediately notify the stakeholder that the full query is still running " +
+      "and that I will be delivering preliminary insights at the meeting rather than a complete analysis, so they are not caught off " +
+      "guard. Then I will switch to optimising the query by limiting the columns I am selecting to only the ones directly relevant to " +
+      "purchasing trends — things like transaction date, product category, and purchase value — so the query runs faster. While that " +
+      "is running, I will pull the most recent report I have on hand and use it to identify any trend patterns already visible in the " +
+      "existing data, so I have something concrete to present even if the optimised query does not finish in time. When I get into the " +
+      "meeting, I will present the preliminary findings from the existing report, flag which conclusions are directional rather than " +
+      "final, and tell the stakeholder exactly when I will have the complete analysis ready.'\n" +
+      "Example correct score: 8\n" +
+      "Scoring rationale: The candidate explicitly addresses both the technical constraint and the delivery constraint. They proactively " +
+      "communicate with the stakeholder before the meeting, optimise the query with specific column examples, and prepare a fallback " +
+      "plan using existing reports so they have something concrete to present regardless of whether the optimised query finishes in time. " +
+      "Every decision is oriented toward the actual goal — having something useful to present at the meeting — which is what the question " +
+      "is testing. It does not reach a 9 because it lacks one more layer of creative depth, such as quantifying what preliminary means to " +
+      "the stakeholder upfront or mentioning additional query optimisation techniques like a LIMIT clause or running against a sampled " +
+      "dataset. The answer is complete and competent but not exceptional, placing it firmly at 8.\n\n" +
+      "EMPTY OR INCOMPLETE ANSWERS\n" +
+      "9. If the candidate's answer is a sentence fragment, contains fewer than 10 words, or does not form a complete thought, the score must be 2 or below. Do not infer strengths from incomplete answers — if the candidate did not say it, they did not demonstrate it.",
 
     prompt:
       `Job title: ${jobTitle}\n` +
