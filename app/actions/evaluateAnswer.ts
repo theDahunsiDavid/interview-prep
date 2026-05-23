@@ -2,8 +2,8 @@
 
 import { generateText, Output } from "ai";
 import { z } from "zod";
-import { getModel } from "@/lib/ai";
-import { EVALUATION_MODEL } from "@/lib/models";
+import { getModel, getFallbackModel, withFallback } from "@/lib/ai";
+import { EVALUATION_MODEL, EVALUATION_MODEL_FALLBACK } from "@/lib/models";
 import { evaluationPrompt } from "@/lib/prompts";
 
 const evaluationSchema = z.object({
@@ -50,12 +50,32 @@ export async function evaluateAnswer(
       transcript,
     );
 
-    const { output } = await generateText({
-      model: getModel(EVALUATION_MODEL),
-      output: Output.object({ schema: evaluationSchema }),
-      system,
-      prompt,
-    });
+    const { output } = await withFallback(
+      () =>
+        generateText({
+          model: getModel(EVALUATION_MODEL),
+          output: Output.object({ schema: evaluationSchema }),
+          system,
+          prompt,
+        }),
+      async () => {
+        const fallbackModel = getFallbackModel(EVALUATION_MODEL_FALLBACK);
+        if (!fallbackModel) throw new Error("Fallback model not available");
+        const { text: fallbackText } = await generateText({
+          model: fallbackModel,
+          output: Output.text(),
+          system:
+            system +
+            "\n\nYou must respond with valid JSON only, no markdown, no other text.",
+          prompt: prompt + "\n\nRespond with valid JSON only. Do not wrap it in markdown.",
+        });
+        const json = fallbackText
+          .replace(/```(?:json)?\s*\n?/g, "")
+          .trim();
+        const parsed = evaluationSchema.parse(JSON.parse(json));
+        return { output: parsed };
+      },
+    );
 
     if (!output) {
       return {
