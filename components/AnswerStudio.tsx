@@ -90,9 +90,15 @@ export default function AnswerStudio({ question, jobTitle, isSpeaking, onReadAlo
     abortedRef.current = false;
 
     if (!navigator.mediaDevices || !window.MediaRecorder) {
-      setError(
-        "Your browser does not support audio recording. Please try Chrome, Firefox, or Edge.",
-      );
+      if (!window.isSecureContext) {
+        setError(
+          "Audio recording requires a secure connection. Please access this page over HTTPS or localhost.",
+        );
+      } else {
+        setError(
+          "Your browser does not support audio recording. Please try Chrome, Firefox, or Edge.",
+        );
+      }
       setStatus("idle");
       return;
     }
