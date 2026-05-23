@@ -54,6 +54,15 @@ export default function Home() {
   async function handleSubmit() {
     const title = jobTitle.trim();
     if (!title) return;
+
+    if (title.length < 4) {
+      setError(
+        "Please enter a valid job title. Job titles are typically 4 characters or more.",
+      );
+      setUiState("idle");
+      return;
+    }
+
     previousUIState.current = uiState;
     window.speechSynthesis.cancel();
     setSpeakingQuestionId(null);
@@ -222,7 +231,10 @@ export default function Home() {
           {showHeaderSearch && (
             <SearchInput
               value={jobTitle}
-              onChange={setJobTitle}
+              onChange={(v) => {
+                setJobTitle(v);
+                setError(null);
+              }}
               onSubmit={handleSubmit}
               isLoading={loadingFromResults}
               variant="results"
@@ -253,7 +265,10 @@ export default function Home() {
         ) : uiState === "idle" || uiState === "loading" ? (
           <IdleView
             jobTitle={jobTitle}
-            onChange={setJobTitle}
+            onChange={(v) => {
+              setJobTitle(v);
+              setError(null);
+            }}
             onSubmit={handleSubmit}
             isLoading={uiState === "loading"}
           />
