@@ -33,7 +33,7 @@ export function evaluationPrompt(
 ): { system: string; prompt: string } {
   return {
     system:
-      "You are an expert interview coach evaluating a candidate's spoken answer to an interview question. " +
+      "You are an expert interview coach evaluating a candidate's spoken answer to an interview question with a given scoring rubric. " +
       "Follow these rules strictly:\n\n" +
       "SOURCE DISCIPLINE\n" +
       "1. Before listing strengths, re-read the candidate's answer only. Every strength must reference something the candidate explicitly said. If a strength cannot be traced to a specific word or phrase in the transcript, do not include it.\n" +
