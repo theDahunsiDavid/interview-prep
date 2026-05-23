@@ -151,6 +151,18 @@ export default function Home() {
     window.speechSynthesis.speak(utterance);
   }
 
+  function handleReset() {
+    window.speechSynthesis.cancel();
+    setSpeakingQuestionId(null);
+    setJobTitle("");
+    setQuestions([]);
+    setSelectedQuestionId(null);
+    setAttempts({});
+    setError(null);
+    setUiState("idle");
+    localStorage.removeItem("interview-prep-state");
+  }
+
   const loadingFromResults =
     uiState === "loading" &&
     (previousUIState.current === "results" ||
@@ -174,7 +186,7 @@ export default function Home() {
       <>
         <header className="fixed top-0 left-0 right-0 z-50 bg-white">
           <div className="mx-auto flex flex-col sm:flex-row sm:h-20 max-w-[90rem] items-start sm:items-center px-4 sm:px-6 lg:px-8 py-3 sm:py-0 gap-5 sm:gap-8">
-            <Link href="/" className="flex items-center">
+            <Link href="/" className="flex items-center" onClick={(e) => { e.preventDefault(); handleReset(); }}>
               <Image
                 src="/interviewprep-small-logo.svg"
                 alt="Interview Prep"
@@ -196,7 +208,7 @@ export default function Home() {
     <>
       <header className={`fixed top-0 left-0 right-0 z-50 ${showHeaderSearch ? "bg-white" : ""}`}>
         <div className="mx-auto flex flex-col sm:flex-row sm:h-20 max-w-[90rem] items-start sm:items-center px-4 sm:px-6 lg:px-8 py-3 sm:py-0 gap-5 sm:gap-8">
-          <Link href="/" className="flex items-center">
+          <Link href="/" className="flex items-center" onClick={(e) => { e.preventDefault(); handleReset(); }}>
             <Image
               src="/interviewprep-small-logo.svg"
               alt="Interview Prep"
@@ -220,6 +232,11 @@ export default function Home() {
       </header>
 
       <main
+        onClick={() => {
+          if (uiState === "results") {
+            setSelectedQuestionId(null);
+          }
+        }}
         className={`flex flex-1 flex-col ${
           useIdleLayout
             ? "items-center justify-center bg-[radial-gradient(ellipse_at_center,rgba(201,106,87,0.28)_0%,rgba(201,106,87,0.08)_45%,transparent_75%)] px-4"
