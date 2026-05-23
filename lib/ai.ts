@@ -1,40 +1,9 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import type { LanguageModelV3 } from "@ai-sdk/provider";
 
 // ── Provider configuration ──────────────────────────────────────────
-// Currently: Groq (OpenAI-compatible API, sub-second inference)
-// Requires: @ai-sdk/openai-compatible
-//
-// HOW TO SWITCH PROVIDERS — change this file, keep lib/models.ts:
-//
-// ── Google Gemini ───────────────────────────────────────────────────
-// npm install @ai-sdk/google
-//
-// import { createGoogleGenerativeAI } from "@ai-sdk/google";
-// const provider = createGoogleGenerativeAI({
-//   apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
-// });
-// export function getModel(id: string) { return provider(id); }
-//
-// Models: "gemini-2.5-flash" | "gemini-2.5-flash-lite" | "gemini-3-flash"
-//
-// ── Vercel AI Gateway ───────────────────────────────────────────────
-// (npm install ai@latest — gateway ships with the "ai" package)
-//
-// import { createGateway } from "ai";
-// const provider = createGateway({
-//   apiKey: process.env.AI_GATEWAY_API_KEY,
-// });
-// export function getModel(id: string) {
-//   return provider(`google/${id}`);  // prefix depends on provider
-// }
-//
-// Models: "google/gemini-3-flash" | "anthropic/claude-sonnet-4-5" | …
-//
-// ── Groq (current) ──────────────────────────────────────────────────
-// npm install @ai-sdk/openai-compatible
-//
-// Requires "JSON" in the prompt when using structured output.
-// ─────────────────────────────────────────────────────────────────────
+// Primary: Groq (OpenAI-compatible API, sub-second inference)
+// Fallback: Vercel AI Gateway → Claude Haiku 4.5 (OpenAI-compatible)
 
 const groq = createOpenAICompatible({
   name: "groq",
@@ -42,6 +11,71 @@ const groq = createOpenAICompatible({
   baseURL: "https://api.groq.com/openai/v1",
 });
 
+// Gateway fallback — silently unavailable if the API key is not set.
+const gateway = process.env.AI_GATEWAY_API_KEY
+  ? createOpenAICompatible({
+      name: "gateway",
+      apiKey: process.env.AI_GATEWAY_API_KEY,
+      baseURL: "https://ai-gateway.vercel.sh/v1",
+      supportsStructuredOutputs: false,
+    })
+  : null;
+
 export function getModel(modelId: string) {
   return groq(modelId);
+}
+
+export function getFallbackModel(modelId: string): LanguageModelV3 | null {
+  return gateway ? gateway(modelId) : null;
+}
+
+// ── Fallback helper ─────────────────────────────────────────────────
+// Tries the primary function first. If it fails with a retryable error
+// (timeout, connection drop, rate limit, or 503), logs a warning and
+// tries the fallback. Non-retryable errors (schema mismatch, invalid
+// prompt) re-throw immediately.
+
+const RETRYABLE_PATTERNS = [
+  "timeout",
+  "retry",
+  "fetch",
+  "network",
+  "unavailable",
+  "demand",
+  "503",
+  "429",
+];
+
+function isRetryable(message: string): boolean {
+  return RETRYABLE_PATTERNS.some((p) => message.includes(p));
+}
+
+export async function withFallback<T>(
+  primary: () => Promise<T>,
+  fallback: (() => Promise<T>) | null,
+): Promise<T> {
+  try {
+    return await primary();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+
+    if (!isRetryable(message)) {
+      throw error;
+    }
+
+    if (!fallback) {
+      console.warn(
+        "Primary model failed (no fallback configured for %s). Try again later.",
+        error,
+      );
+      throw error;
+    }
+
+    console.warn(
+      "Primary model failed (%s). Retrying with fallback. %s",
+      message,
+      error,
+    );
+    return await fallback();
+  }
 }
