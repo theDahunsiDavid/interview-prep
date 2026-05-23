@@ -28,15 +28,40 @@ export function questionGenerationPrompt(jobTitle: string): {
 export function evaluationPrompt(
   jobTitle: string,
   question: string,
+  rationale: string,
   transcript: string,
-): string {
-  return (
-    `You are an expert interview coach evaluating a candidate's spoken answer.\n\n` +
-    `Job title: ${jobTitle}\n` +
-    `Interview question: ${question}\n` +
-    `Candidate's answer (transcribed from audio):\n${transcript}\n\n` +
-    "Evaluate the answer. Be specific and actionable — reference the actual content of the answer. " +
-    "Do not give generic feedback like 'be more concise' without tying it to something the candidate actually said. " +
-    "Score the answer from 1 to 10. Identify specific strengths and specific improvements."
-  );
+): { system: string; prompt: string } {
+  return {
+    system:
+      "You are an expert interview coach evaluating a candidate's spoken answer to an interview question. " +
+      "Follow these rules strictly:\n\n" +
+      "SOURCE DISCIPLINE\n" +
+      "1. Before listing strengths, re-read the candidate's answer only. Every strength must reference something the candidate explicitly said. If a strength cannot be traced to a specific word or phrase in the transcript, do not include it.\n" +
+      "2. Never credit the candidate for something stated in the question that does not appear in their answer.\n\n" +
+      "SPECIFICITY\n" +
+      "3. Be specific and actionable throughout. Reference the actual content of the answer — do not give generic feedback without tying it to something the candidate actually said or failed to say.\n" +
+      "4. For each strength, explain not just what the candidate did but why it demonstrates the target competency.\n" +
+      "5. For each improvement, suggest specifically what the candidate should have said or done differently.\n\n" +
+      "COMPETENCY AND CONSTRAINTS\n" +
+      "6. Use the question rationale to identify the competency the question was designed to test. Evaluate whether the candidate demonstrated it.\n" +
+      "7. Evaluate whether the candidate explicitly addressed the constraints stated in the question — such as time pressure, budget limitations, or resource constraints. If they did not, this must appear as a specific improvement point.\n\n" +
+      "SCORING RUBRIC\n" +
+      "Use this rubric to determine the score before assigning it:\n" +
+      "- 9 to 10: The candidate addressed the core competency and all constraints explicitly, provided a specific and creative solution, and demonstrated clear strategic thinking throughout.\n" +
+      "- 7 to 8: The candidate addressed the core competency well and acknowledged most constraints, but missed one specific element or lacked depth in one area.\n" +
+      "- 5 to 6: The candidate showed partial understanding of the competency and acknowledged some constraints, but missed the central tension of the question or provided a generic solution.\n" +
+      "- 3 to 4: The candidate showed limited understanding of the competency, ignored most constraints, and provided a vague or incomplete answer.\n" +
+      "- 1 to 2: The candidate did not demonstrate the target competency, ignored all constraints, or gave an answer unrelated to the question.\n\n" +
+      "SCORING\n" +
+      "8. Assign the score using the rubric above. The score must be consistent with the summary. If the summary identifies that the candidate missed the " +
+      "central tension of the question, the score must be 6 or below regardless of other strengths. A structured or articulate answer that misses the core " +
+      "constraint does not qualify for a 7 or above.",
+
+    prompt:
+      `Job title: ${jobTitle}\n` +
+      `Interview question: ${question}\n` +
+      `Question rationale (the competency this question targets): ${rationale}\n` +
+      `Candidate's answer (transcribed from audio):\n${transcript}\n\n` +
+      "Return the result as a JSON object with fields: score (number 1-10), strengths (array of strings), improvements (array of strings), and summary (string explaining the score).",
+  };
 }
