@@ -131,6 +131,7 @@ export default function Home() {
                 width={112}
                 height={28}
                 className="h-8 sm:h-7 w-auto"
+                priority
                 unoptimized
               />
             </Link>
@@ -152,6 +153,7 @@ export default function Home() {
               width={112}
               height={28}
               className="h-8 sm:h-7 w-auto"
+              priority
               unoptimized
             />
           </Link>
