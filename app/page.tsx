@@ -8,7 +8,7 @@ import IdleView from "@/components/IdleView";
 import ResultsView from "@/components/ResultsView";
 import AnswerStudio from "@/components/AnswerStudio";
 import { generateQuestions } from "@/app/actions/generateQuestions";
-import type { Question, UIState } from "@/types";
+import type { Question, UIState, Attempt } from "@/types";
 
 export default function Home() {
   const [uiState, setUiState] = useState<UIState>("idle");
@@ -22,6 +22,8 @@ export default function Home() {
     null,
   );
 
+  const [attempts, setAttempts] = useState<Record<string, Attempt[]>>({});
+
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -32,7 +34,13 @@ export default function Home() {
         if (saved.jobTitle && saved.questions?.length) {
           setJobTitle(saved.jobTitle);
           setQuestions(saved.questions);
-          setUiState("results");
+          setUiState(saved.uiState || "results");
+          if (saved.selectedQuestionId) {
+            setSelectedQuestionId(saved.selectedQuestionId);
+          }
+          if (saved.attempts) {
+            setAttempts(saved.attempts);
+          }
         }
       }
     } catch {
@@ -65,6 +73,9 @@ export default function Home() {
           JSON.stringify({
             jobTitle: title,
             questions: result.questions,
+            uiState: "results",
+            selectedQuestionId: null,
+            attempts: {},
           }),
         );
       } catch {
@@ -79,6 +90,45 @@ export default function Home() {
   function handleSelectQuestion(id: string) {
     setSelectedQuestionId(id);
     setUiState("answer-mode");
+
+    try {
+      localStorage.setItem(
+        "interview-prep-state",
+        JSON.stringify({
+          jobTitle,
+          questions,
+          uiState: "answer-mode",
+          selectedQuestionId: id,
+          attempts,
+        }),
+      );
+    } catch {
+      // localStorage full or unavailable — app still works.
+    }
+  }
+
+  function handleAttemptComplete(questionId: string, attempt: Attempt) {
+    setAttempts((prev) => {
+      const updated = {
+        ...prev,
+        [questionId]: [...(prev[questionId] || []), attempt],
+      };
+      try {
+        localStorage.setItem(
+          "interview-prep-state",
+          JSON.stringify({
+            jobTitle,
+            questions,
+            uiState,
+            selectedQuestionId,
+            attempts: updated,
+          }),
+        );
+      } catch {
+        // localStorage full or unavailable — app still works.
+      }
+      return updated;
+    });
   }
 
   function handleReadAloud(id: string) {
@@ -202,7 +252,23 @@ export default function Home() {
           <div className="mx-auto max-w-[90rem] w-full flex flex-col gap-6 mt-8 lg:px-42">
             <button
               type="button"
-              onClick={() => setUiState("results")}
+              onClick={() => {
+                setUiState("results");
+                try {
+                  localStorage.setItem(
+                    "interview-prep-state",
+                    JSON.stringify({
+                      jobTitle,
+                      questions,
+                      uiState: "results",
+                      selectedQuestionId,
+                      attempts,
+                    }),
+                  );
+                } catch {
+                  // localStorage full or unavailable.
+                }
+              }}
               className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-700 transition-colors self-start"
             >
               <svg
@@ -226,6 +292,10 @@ export default function Home() {
               jobTitle={jobTitle}
               isSpeaking={selectedQuestion.id === speakingQuestionId}
               onReadAloud={() => handleReadAloud(selectedQuestion.id)}
+              attempts={attempts[selectedQuestion.id] || []}
+              onAttemptComplete={(attempt) =>
+                handleAttemptComplete(selectedQuestion.id, attempt)
+              }
             />
           </div>
         ) : null}
