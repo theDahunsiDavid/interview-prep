@@ -70,6 +70,7 @@ The overarching philosophy for the current architecture of this app is this: avo
 │   ├── page.tsx                    # Single page, all UI state and transitions
 │   ├── layout.tsx                  # Root layout, fonts, metadata
 │   ├── globals.css                 # Tailwind, brand tokens
+│   ├── favicon.ico                 # App favicon
 │   └── actions/
 │       ├── generateQuestions.ts    # Job title → 3 questions
 │       ├── transcribeAudio.ts      # Audio blob → transcript
@@ -87,9 +88,15 @@ The overarching philosophy for the current architecture of this app is this: avo
 │   ├── ai.ts                       # Provider abstraction (currently Groq)
 │   ├── models.ts                   # Model assignments per task
 │   └── prompts.ts                  # All AI prompt templates
+├── public/
+│   ├── interviewprep-favicon.svg   # SVG favicon
+│   ├── interviewprep-small-logo.svg # App logo
+│   ├── apple-touch-icon.png        # iOS home screen icon
+│   └── web-app-manifest-*.png      # PWA manifest icons
+├── tests/
+│   └── transcribeAudio.test.ts     # Unit tests
 ├── types/
 │   └── index.ts                    # Shared TypeScript types
-├── out/                            # Planning docs and commit histories
 ├── .env.local.example              # Environment variable documentation
 └── next.config.ts                  # Next.js config (server action body limit)
 ```
