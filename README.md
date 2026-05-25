@@ -2,7 +2,7 @@
 
 AI-powered deliberate practice for job interviews. Enter a job title, get role-specific questions, record your answers, and receive scored feedback with actionable improvements.
 
-**[Live URL](https://interview-prep-live.vercel.app/)** · **[Loom walkthrough](#)**
+**[Live URL](https://interview-prep-live.vercel.app/)** · **[Loom walkthrough](https://www.loom.com/share/870413fa0cdf4249a8bacf2ac6531500)**
 
 ---
 
