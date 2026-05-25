@@ -2,11 +2,13 @@
   <img src="public/interviewprep-small-logo.svg" alt="Interview Prep" width="400" />
 </p>
 
-# Interview Prep
+<p align="center">
+  AI-powered deliberate practice for job interviews. Enter a job title, get role-specific questions, record your answers, and receive scored feedback with actionable improvements.
+</p>
 
-AI-powered deliberate practice for job interviews. Enter a job title, get role-specific questions, record your answers, and receive scored feedback with actionable improvements.
-
-**[Live URL](https://interview-prep-live.vercel.app/)** · **[Loom walkthrough](https://www.loom.com/share/870413fa0cdf4249a8bacf2ac6531500)**
+<p align="center">
+  <strong><a href="https://interview-prep-live.vercel.app/">Live URL</a></strong> · <strong><a href="https://www.loom.com/share/870413fa0cdf4249a8bacf2ac6531500">Loom walkthrough</a></strong>
+</p>
 
 ---
 
